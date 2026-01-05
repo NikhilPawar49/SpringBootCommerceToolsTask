@@ -4,13 +4,16 @@ import com.example.commercetoolsDemo.dto.request.*;
 import com.example.commercetoolsDemo.dto.request.CartUpdateRequest.CartAction;
 import com.example.commercetoolsDemo.dto.request.CartUpdateRequest.Address;
 import com.example.commercetoolsDemo.dto.request.CartUpdateRequest.ShippingMethodReference;
+import com.example.commercetoolsDemo.dto.response.*;
 import com.example.commercetoolsDemo.feign.MeFeignClient;
+import com.example.commercetoolsDemo.mapper.ResponseMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.Map;
 
 @Slf4j
 @Service
@@ -18,37 +21,39 @@ import java.util.Collections;
 public class MeService {
 
     private final MeFeignClient meFeignClient;
+    private final ResponseMapper responseMapper;
 
     @Value("${ct.projectKey}")
     private String projectKey;
 
-    // Get active cart
-    public Object getMyActiveCart(String token) {
+    // ============= CART OPERATIONS =============
+
+    public CartResponse getMyActiveCart(String token) {
         log.info("Fetching active cart");
-        return meFeignClient.getMyActiveCart(projectKey, token);
+        Map<String, Object> ctResponse = (Map<String, Object>) meFeignClient.getMyActiveCart(projectKey, token);
+        return responseMapper.mapToCartResponse(ctResponse);
     }
 
-    // Get all carts
-    public Object getMyCarts(String token) {
+    public CartListResponse getMyCarts(String token) {
         log.info("Fetching all carts");
-        return meFeignClient.getMyCarts(projectKey, token);
+        Map<String, Object> ctResponse = (Map<String, Object>) meFeignClient.getMyCarts(projectKey, token);
+        return responseMapper.mapToCartListResponse(ctResponse);
     }
 
-    // Get cart by ID
-    public Object getMyCartById(String id, String token) {
+    public CartResponse getMyCartById(String id, String token) {
         log.info("Fetching cart with ID: {}", id);
-        return meFeignClient.getMyCartById(projectKey, id, token);
+        Map<String, Object> ctResponse = (Map<String, Object>) meFeignClient.getMyCartById(projectKey, id, token);
+        return responseMapper.mapToCartResponse(ctResponse);
     }
 
-    // Create cart
-    public Object createMyCart(String auth, CreateCartRequest body) {
+    public CartResponse createMyCart(String auth, CreateCartRequest body) {
         log.info("Creating cart with request: {}", body);
-        return meFeignClient.createMyCart(projectKey, auth, body);
+        Map<String, Object> ctResponse = (Map<String, Object>) meFeignClient.createMyCart(projectKey, auth, body);
+        return responseMapper.mapToCartResponse(ctResponse);
     }
 
-    // Add line item to cart
-    public Object addLineItemToCart(String cartId, String token, Long version,
-                                    String productId, Integer variantId, Integer quantity) {
+    public CartResponse addLineItemToCart(String cartId, String token, Long version,
+                                          String productId, Integer variantId, Integer quantity) {
         log.info("Adding line item to cart {}: productId={}, variantId={}, quantity={}",
                 cartId, productId, variantId, quantity);
 
@@ -64,14 +69,14 @@ public class MeService {
                 .actions(Collections.singletonList(action))
                 .build();
 
-        return meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        Map<String, Object> ctResponse = (Map<String, Object>) meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        return responseMapper.mapToCartResponse(ctResponse);
     }
 
-    // Set shipping address
-    public Object setShippingAddress(String cartId, String token, Long version,
-                                     String streetName, String streetNumber,
-                                     String city, String state,
-                                     String postalCode, String country) {
+    public CartResponse setShippingAddress(String cartId, String token, Long version,
+                                           String streetName, String streetNumber,
+                                           String city, String state,
+                                           String postalCode, String country) {
         log.info("Setting shipping address for cart {}", cartId);
 
         Address address = Address.builder()
@@ -93,14 +98,14 @@ public class MeService {
                 .actions(Collections.singletonList(action))
                 .build();
 
-        return meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        Map<String, Object> ctResponse = (Map<String, Object>) meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        return responseMapper.mapToCartResponse(ctResponse);
     }
 
-    // Set billing address
-    public Object setBillingAddress(String cartId, String token, Long version,
-                                    String streetName, String streetNumber,
-                                    String city, String state,
-                                    String postalCode, String country) {
+    public CartResponse setBillingAddress(String cartId, String token, Long version,
+                                          String streetName, String streetNumber,
+                                          String city, String state,
+                                          String postalCode, String country) {
         log.info("Setting billing address for cart {}", cartId);
 
         Address address = Address.builder()
@@ -122,12 +127,12 @@ public class MeService {
                 .actions(Collections.singletonList(action))
                 .build();
 
-        return meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        Map<String, Object> ctResponse = (Map<String, Object>) meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        return responseMapper.mapToCartResponse(ctResponse);
     }
 
-    // Set shipping method
-    public Object setShippingMethod(String cartId, String token, Long version,
-                                    String shippingMethodId) {
+    public CartResponse setShippingMethod(String cartId, String token, Long version,
+                                          String shippingMethodId) {
         log.info("Setting shipping method for cart {}: {}", cartId, shippingMethodId);
 
         ShippingMethodReference shippingMethod = ShippingMethodReference.builder()
@@ -145,23 +150,25 @@ public class MeService {
                 .actions(Collections.singletonList(action))
                 .build();
 
-        return meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        Map<String, Object> ctResponse = (Map<String, Object>) meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        return responseMapper.mapToCartResponse(ctResponse);
     }
 
-    // Update cart (generic method)
-    public Object updateMyCart(String cartId, String token, CartUpdateRequest request) {
+    public CartResponse updateMyCart(String cartId, String token, CartUpdateRequest request) {
         log.info("Updating cart {} with actions: {}", cartId, request.getActions());
-        return meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        Map<String, Object> ctResponse = (Map<String, Object>) meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        return responseMapper.mapToCartResponse(ctResponse);
     }
 
-    // Delete cart
-    public Object deleteMyCart(String id, Long version, String token) {
+    public CartResponse deleteMyCart(String id, Long version, String token) {
         log.info("Deleting cart with ID: {}", id);
-        return meFeignClient.deleteMyCart(projectKey, id, version, token);
+        Map<String, Object> ctResponse = (Map<String, Object>) meFeignClient.deleteMyCart(projectKey, id, version, token);
+        return responseMapper.mapToCartResponse(ctResponse);
     }
 
-    // Create order from cart
-    public Object createMyOrder(String token, String cartId, Long cartVersion) {
+    // ============= ORDER OPERATIONS =============
+
+    public OrderResponse createMyOrder(String token, String cartId, Long cartVersion) {
         log.info("Creating order from cart ID: {}, version: {}", cartId, cartVersion);
 
         CreateOrderRequest request = CreateOrderRequest.builder()
@@ -169,18 +176,19 @@ public class MeService {
                 .version(cartVersion)
                 .build();
 
-        return meFeignClient.createMyOrder(projectKey, token, request);
+        Map<String, Object> ctResponse = (Map<String, Object>) meFeignClient.createMyOrder(projectKey, token, request);
+        return responseMapper.mapToOrderResponse(ctResponse);
     }
 
-    // Get my orders
-    public Object getMyOrders(String token) {
+    public OrderListResponse getMyOrders(String token) {
         log.info("Fetching all orders");
-        return meFeignClient.getMyOrders(projectKey, token);
+        Map<String, Object> ctResponse = (Map<String, Object>) meFeignClient.getMyOrders(projectKey, token);
+        return responseMapper.mapToOrderListResponse(ctResponse);
     }
 
-    // Get order by ID
-    public Object getMyOrderById(String id, String token) {
+    public OrderResponse getMyOrderById(String id, String token) {
         log.info("Fetching order with ID: {}", id);
-        return meFeignClient.getMyOrderById(projectKey, id, token);
+        Map<String, Object> ctResponse = (Map<String, Object>) meFeignClient.getMyOrderById(projectKey, id, token);
+        return responseMapper.mapToOrderResponse(ctResponse);
     }
 }

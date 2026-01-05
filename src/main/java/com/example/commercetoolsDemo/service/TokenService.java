@@ -1,22 +1,20 @@
 package com.example.commercetoolsDemo.service;
 
+import com.example.commercetoolsDemo.feign.CtAuthFeignClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
 
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
+import java.util.Base64;
 import java.util.Map;
 
 @Slf4j
 @Service
 public class TokenService {
-
-    @Value("${ct.authUrl}")
-    private String authUrl;
 
     @Value("${ct.clientId}")
     private String clientId;
@@ -30,10 +28,14 @@ public class TokenService {
     private String accessToken;
     private Instant expiryTime;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final CtAuthFeignClient authFeignClient;
+
+    public TokenService(CtAuthFeignClient authFeignClient) {
+        this.authFeignClient = authFeignClient;
+    }
 
     /**
-     * Returns a valid admin token (cached or fresh).
+     * Returns cached admin token or fetches a new one.
      */
     public synchronized String getAdminToken() {
 
@@ -46,45 +48,29 @@ public class TokenService {
     }
 
     /**
-     * Calls commercetools OAuth server using client_credentials flow.
+     * Fetch new token using Feign (client_credentials flow).
      */
     private void fetchNewToken() {
 
         try {
-            log.info("Calling commercetools OAuth server");
-
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBasicAuth(clientId, clientSecret);
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
-
             MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
             body.add("grant_type", "client_credentials");
             body.add("scope", scopes);
 
-            HttpEntity<MultiValueMap<String, String>> request =
-                    new HttpEntity<>(body, headers);
+            String basicAuth = "Basic " + Base64.getEncoder()
+                    .encodeToString((clientId + ":" + clientSecret)
+                            .getBytes(StandardCharsets.UTF_8));
 
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    authUrl + "/oauth/token",
-                    HttpMethod.POST,
-                    request,
-                    Map.class
-            );
+            Map<String, Object> response =
+                    authFeignClient.getToken(basicAuth, "client_credentials",scopes);
 
-            if (response.getBody() == null) {
-                throw new IllegalStateException("Empty token response from commercetools");
-            }
-
-            Map<String, Object> responseBody = response.getBody();
-
-            accessToken = (String) responseBody.get("access_token");
-            Integer expiresIn = (Integer) responseBody.get("expires_in");
+            accessToken = (String) response.get("access_token");
+            Integer expiresIn = (Integer) response.get("expires_in");
 
             if (accessToken == null || expiresIn == null) {
-                throw new IllegalStateException("Invalid token response: " + responseBody);
+                throw new IllegalStateException("Invalid token response: " + response);
             }
 
-            // safety buffer of 60 seconds
             expiryTime = Instant.now().plusSeconds(expiresIn - 60);
 
             log.info("Admin token fetched successfully, expires in {} seconds", expiresIn);
@@ -96,9 +82,6 @@ public class TokenService {
         }
     }
 
-    /**
-     * Checks if cached token is expired.
-     */
     private boolean isTokenExpired() {
         return expiryTime == null || Instant.now().isAfter(expiryTime);
     }

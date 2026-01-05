@@ -1,7 +1,7 @@
 plugins {
     id 'java'
-    id 'org.springframework.boot' version '3.3.5'
-    id 'io.spring.dependency-management' version '1.1.6'
+    id 'org.springframework.boot' version "${springBootVersion}"
+    id 'io.spring.dependency-management' version "${springDependencyManagementVersion}"
 }
 
 group = 'com.commercetools'
@@ -9,7 +9,7 @@ version = '0.0.1-SNAPSHOT'
 
 java {
     toolchain {
-        languageVersion = JavaLanguageVersion.of(21)
+        languageVersion = JavaLanguageVersion.of(javaVersion.toInteger())
     }
 }
 
@@ -24,37 +24,32 @@ repositories {
 }
 
 ext {
-    set('springCloudVersion', "2023.0.3")
+    set('springCloudVersion', springCloudVersion)
 }
 
 dependencies {
-    // Spring Boot Starters
+
+
+    implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocOpenApiVersion}"
+
+    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation "io.github.openfeign.form:feign-form-spring:${feignFormVersion}"
+    implementation "io.github.openfeign:feign-httpclient:${feignHttpClientVersion}"
+
     implementation 'org.springframework.boot:spring-boot-starter-web'
     implementation 'org.springframework.boot:spring-boot-starter-validation'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
 
-    // Spring Cloud OpenFeign
-    implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
+    implementation "com.fasterxml.jackson.core:jackson-databind:${jacksonVersion}"
+    implementation "com.fasterxml.jackson.datatype:jackson-datatype-jsr310:${jacksonVersion}"
 
-    // Lombok - for reducing boilerplate code
-    compileOnly 'org.projectlombok:lombok'
-    annotationProcessor 'org.projectlombok:lombok'
+    compileOnly "org.projectlombok:lombok:${lombokVersion}"
+    annotationProcessor "org.projectlombok:lombok:${lombokVersion}"
 
-    // Jackson for JSON processing
-    implementation 'com.fasterxml.jackson.core:jackson-databind'
-    implementation 'com.fasterxml.jackson.datatype:jackson-datatype-jsr310'
-
-    // Apache HttpClient for Feign
-    implementation 'io.github.openfeign:feign-httpclient:13.3'
-
-    // Logging
-    implementation 'org.springframework.boot:spring-boot-starter-logging'
-
-    // Development tools
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
-
-    // Testing
+    
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testImplementation "org.mockito:mockito-core:${mockitoVersion}"
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
@@ -68,7 +63,6 @@ tasks.named('test') {
     useJUnitPlatform()
 }
 
-// Gradle compatibility settings
 tasks.withType(JavaCompile).configureEach {
     options.encoding = 'UTF-8'
 }

@@ -1,6 +1,7 @@
 package com.example.commercetoolsDemo.controller;
 
 import com.example.commercetoolsDemo.dto.request.CreateCartRequest;
+import com.example.commercetoolsDemo.dto.response.CartResponse;
 import com.example.commercetoolsDemo.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -13,17 +14,17 @@ public class AdminController {
     private final AdminService adminService;
 
     @GetMapping("/cart/{id}")
-    public Object getCart(@PathVariable String id) {
+    public CartResponse getCart(@PathVariable String id) {
         return adminService.getCart(id);
     }
 
     @PostMapping("/cart")
-    public Object createCart(@RequestBody CreateCartRequest body) {
+    public CartResponse createCart(@RequestBody CreateCartRequest body) {
         return adminService.createCart(body);
     }
 
     @DeleteMapping("/cart/{id}")
-    public Object deleteCart(
+    public CartResponse deleteCart(
             @PathVariable String id,
             @RequestParam Long version
     ) {

@@ -1,4 +1,4 @@
-package com.example.commercetoolsDemo.dto.request;
+package com.example.commercetoolsDemo.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -6,16 +6,16 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
+
+// ============= MONEY RESPONSE =============
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class CreateCartRequest {
-
-    private String currency;
-    private String anonymousId;
-
-    public CreateCartRequest(String usd) {
-    }
+public class MoneyResponse {
+    private String currencyCode;
+    private BigDecimal amount;
+    private Integer centAmount;
 }

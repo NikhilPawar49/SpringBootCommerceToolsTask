@@ -1,4 +1,4 @@
-package com.example.commercetoolsDemo.dto.request;
+package com.example.commercetoolsDemo.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -6,16 +6,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.List;
+
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonInclude(JsonInclude.Include.NON_NULL)
-public class CreateCartRequest {
-
-    private String currency;
-    private String anonymousId;
-
-    public CreateCartRequest(String usd) {
-    }
+public class OrderListResponse {
+    private Integer total;
+    private List<OrderResponse> results;
 }

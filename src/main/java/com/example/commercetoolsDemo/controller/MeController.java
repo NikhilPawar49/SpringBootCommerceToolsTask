@@ -2,6 +2,7 @@ package com.example.commercetoolsDemo.controller;
 
 import com.example.commercetoolsDemo.dto.request.CartUpdateRequest;
 import com.example.commercetoolsDemo.dto.request.CreateCartRequest;
+import com.example.commercetoolsDemo.dto.response.*;
 import com.example.commercetoolsDemo.service.MeService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -18,21 +19,21 @@ public class MeController {
     // ============= CART OPERATIONS =============
 
     @GetMapping("/cart/active")
-    public Object getMyActiveCart(
+    public CartResponse getMyActiveCart(
             @RequestHeader("Authorization") String token
     ) {
         return meService.getMyActiveCart(token);
     }
 
     @GetMapping("/cart")
-    public Object getMyCarts(
+    public CartListResponse getMyCarts(
             @RequestHeader("Authorization") String token
     ) {
         return meService.getMyCarts(token);
     }
 
     @GetMapping("/cart/{id}")
-    public Object getMyCartById(
+    public CartResponse getMyCartById(
             @PathVariable String id,
             @RequestHeader("Authorization") String token
     ) {
@@ -40,7 +41,7 @@ public class MeController {
     }
 
     @PostMapping("/cart")
-    public Object createMyCart(
+    public CartResponse createMyCart(
             @RequestHeader("Authorization") String auth,
             @RequestBody CreateCartRequest body
     ) {
@@ -48,7 +49,7 @@ public class MeController {
     }
 
     @PostMapping("/cart/{id}/add-item")
-    public Object addLineItemToCart(
+    public CartResponse addLineItemToCart(
             @PathVariable String id,
             @RequestHeader("Authorization") String token,
             @RequestBody Map<String, Object> body
@@ -62,7 +63,7 @@ public class MeController {
     }
 
     @PostMapping("/cart/{id}/shipping-address")
-    public Object setShippingAddress(
+    public CartResponse setShippingAddress(
             @PathVariable String id,
             @RequestHeader("Authorization") String token,
             @RequestBody Map<String, Object> body
@@ -82,7 +83,7 @@ public class MeController {
     }
 
     @PostMapping("/cart/{id}/billing-address")
-    public Object setBillingAddress(
+    public CartResponse setBillingAddress(
             @PathVariable String id,
             @RequestHeader("Authorization") String token,
             @RequestBody Map<String, Object> body
@@ -102,7 +103,7 @@ public class MeController {
     }
 
     @PostMapping("/cart/{id}/shipping-method")
-    public Object setShippingMethod(
+    public CartResponse setShippingMethod(
             @PathVariable String id,
             @RequestHeader("Authorization") String token,
             @RequestBody Map<String, Object> body
@@ -114,7 +115,7 @@ public class MeController {
     }
 
     @PostMapping("/cart/{id}/update")
-    public Object updateMyCart(
+    public CartResponse updateMyCart(
             @PathVariable String id,
             @RequestHeader("Authorization") String token,
             @RequestBody CartUpdateRequest body
@@ -123,7 +124,7 @@ public class MeController {
     }
 
     @DeleteMapping("/cart/{id}")
-    public Object deleteMyCart(
+    public CartResponse deleteMyCart(
             @PathVariable String id,
             @RequestParam Long version,
             @RequestHeader("Authorization") String token
@@ -131,10 +132,8 @@ public class MeController {
         return meService.deleteMyCart(id, version, token);
     }
 
-    // ============= ORDER OPERATIONS =============
-
     @PostMapping("/order")
-    public Object createMyOrder(
+    public OrderResponse createMyOrder(
             @RequestHeader("Authorization") String token,
             @RequestBody Map<String, Object> body
     ) {
@@ -145,14 +144,14 @@ public class MeController {
     }
 
     @GetMapping("/order")
-    public Object getMyOrders(
+    public OrderListResponse getMyOrders(
             @RequestHeader("Authorization") String token
     ) {
         return meService.getMyOrders(token);
     }
 
     @GetMapping("/order/{id}")
-    public Object getMyOrderById(
+    public OrderResponse getMyOrderById(
             @PathVariable String id,
             @RequestHeader("Authorization") String token
     ) {
