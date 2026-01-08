@@ -1,6 +1,6 @@
 package com.example.commercetoolsDemo.controller;
 
-import com.example.commercetoolsDemo.dto.response.CartResponse;
+import com.example.api.model.CartResponse;
 import com.example.commercetoolsDemo.service.MeService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +29,8 @@ class MeControllerTest {
     @Test
     void createMyCart_shouldReturnCart() throws Exception {
 
-        CartResponse response = CartResponse.builder()
-                .id("cart-1")
-                .version(1L)
-                .build();
+        CartResponse response = new CartResponse();
+        response.setId("cart-1");
 
         when(meService.createMyCart(any(), any()))
                 .thenReturn(response);

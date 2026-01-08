@@ -1,17 +1,12 @@
 package com.example.commercetoolsDemo.service;
 
-import com.example.commercetoolsDemo.dto.request.CreateCustomerRequest;
-import com.example.commercetoolsDemo.dto.response.CustomerResponse;
-import com.example.commercetoolsDemo.dto.response.LoginResponse;
+import com.example.api.model.*;
+import com.example.commercetoolsDemo.dto.LoginRequest;
 import com.example.commercetoolsDemo.feign.AuthFeignClient;
-import com.example.commercetoolsDemo.mapper.ResponseMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-
-import java.util.HashMap;
-import java.util.Map;
 
 @Slf4j
 @Service
@@ -19,34 +14,49 @@ import java.util.Map;
 public class AuthService {
 
     private final AuthFeignClient authFeignClient;
-    private final ResponseMapper responseMapper;
 
     @Value("${ct.projectKey}")
     private String projectKey;
 
-    public CustomerResponse createCustomer(CreateCustomerRequest request) {
-        log.info("Creating customer with email: {}", request.getEmail());
-        Map<String, Object> ctResponse = (Map<String, Object>) authFeignClient.createCustomer(projectKey, request);
+    // ================= CREATE CUSTOMER =================
 
-        // Extract customer from response (commercetools wraps it in "customer" field)
-        Map<String, Object> customerData = (Map<String, Object>) ctResponse.get("customer");
-        return responseMapper.mapToCustomerResponse(customerData);
+    public CustomerResponse createCustomer(CreateCustomerRequest request) {
+        log.debug("START createCustomer | email={}", request.getEmail());
+
+        CustomerResponse response =
+                authFeignClient.createCustomer(projectKey, request);
+
+        log.debug("END createCustomer | customerId={}", response.getId());
+        return response;
     }
+
+    // ================= LOGIN =================
 
     public LoginResponse loginCustomer(String email, String password) {
-        log.info("Customer login attempt for email: {}", email);
+        log.debug("START loginCustomer | email={}", email);
 
-        Map<String, String> credentials = new HashMap<>();
-        credentials.put("email", email);
-        credentials.put("password", password);
+        LoginRequest request = new LoginRequest();
+        request.setEmail(email);
+        request.setPassword(password);
 
-        Map<String, Object> ctResponse = (Map<String, Object>) authFeignClient.customerLogin(projectKey, credentials);
-        return responseMapper.mapToLoginResponse(ctResponse);
+        LoginResponse response =
+                authFeignClient.customerLogin(projectKey, request);
+
+        log.debug("END loginCustomer | customerId={}",
+                response.getCustomer() != null ? response.getCustomer().getId() : null);
+
+        return response;
     }
 
+    // ================= GET CUSTOMER INFO =================
+
     public CustomerResponse getCustomerInfo(String token) {
-        log.info("Fetching customer info");
-        Map<String, Object> ctResponse = (Map<String, Object>) authFeignClient.getCustomerInfo(projectKey, token);
-        return responseMapper.mapToCustomerResponse(ctResponse);
+        log.debug("START getCustomerInfo");
+
+        CustomerResponse response =
+                authFeignClient.getCustomerInfo(projectKey, token);
+
+        log.debug("END getCustomerInfo | customerId={}", response.getId());
+        return response;
     }
 }

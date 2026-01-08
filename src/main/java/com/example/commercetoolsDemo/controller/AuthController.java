@@ -1,8 +1,6 @@
 package com.example.commercetoolsDemo.controller;
 
-import com.example.commercetoolsDemo.dto.request.CreateCustomerRequest;
-import com.example.commercetoolsDemo.dto.response.CustomerResponse;
-import com.example.commercetoolsDemo.dto.response.LoginResponse;
+import com.example.api.model.*;
 import com.example.commercetoolsDemo.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;

@@ -1,14 +1,13 @@
 package com.example.commercetoolsDemo.controller;
 
-import com.example.commercetoolsDemo.dto.request.CartUpdateRequest;
-import com.example.commercetoolsDemo.dto.request.CreateCartRequest;
-import com.example.commercetoolsDemo.dto.response.*;
+import com.example.api.model.*;
 import com.example.commercetoolsDemo.service.MeService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/me")
 @RequiredArgsConstructor
@@ -22,13 +21,17 @@ public class MeController {
     public CartResponse getMyActiveCart(
             @RequestHeader("Authorization") String token
     ) {
-        return meService.getMyActiveCart(token);
+        log.debug("GET /me/cart/active called");
+        CartResponse response = meService.getMyActiveCart(token);
+        log.debug("GET /me/cart/active completed");
+        return response;
     }
 
     @GetMapping("/cart")
     public CartListResponse getMyCarts(
             @RequestHeader("Authorization") String token
     ) {
+        log.debug("GET /me/cart called");
         return meService.getMyCarts(token);
     }
 
@@ -37,6 +40,7 @@ public class MeController {
             @PathVariable String id,
             @RequestHeader("Authorization") String token
     ) {
+        log.debug("GET /me/cart/{} called", id);
         return meService.getMyCartById(id, token);
     }
 
@@ -45,6 +49,7 @@ public class MeController {
             @RequestHeader("Authorization") String auth,
             @RequestBody CreateCartRequest body
     ) {
+        log.debug("POST /me/cart called with currency={}", body.getCurrency());
         return meService.createMyCart(auth, body);
     }
 
@@ -52,33 +57,38 @@ public class MeController {
     public CartResponse addLineItemToCart(
             @PathVariable String id,
             @RequestHeader("Authorization") String token,
-            @RequestBody Map<String, Object> body
+            @RequestBody AddLineItemRequest body
     ) {
-        Long version = Long.valueOf(body.get("version").toString());
-        String productId = (String) body.get("productId");
-        Integer variantId = (Integer) body.getOrDefault("variantId", 1);
-        Integer quantity = (Integer) body.getOrDefault("quantity", 1);
+        log.debug("POST /me/cart/{}/add-item productId={}", id, body.getProductId());
 
-        return meService.addLineItemToCart(id, token, version, productId, variantId, quantity);
+        return meService.addLineItemToCart(
+                id,
+                token,
+                body.getVersion(),
+                body.getProductId(),
+                body.getVariantId(),
+                body.getQuantity()
+        );
     }
 
     @PostMapping("/cart/{id}/shipping-address")
     public CartResponse setShippingAddress(
             @PathVariable String id,
             @RequestHeader("Authorization") String token,
-            @RequestBody Map<String, Object> body
+            @RequestBody AddressRequest body
     ) {
-        Long version = Long.valueOf(body.get("version").toString());
-        Map<String, String> address = (Map<String, String>) body.get("address");
+        log.debug("POST /me/cart/{}/shipping-address", id);
+
+        Address address = body.getAddress();
 
         return meService.setShippingAddress(
-                id, token, version,
-                address.get("streetName"),
-                address.get("streetNumber"),
-                address.get("city"),
-                address.get("state"),
-                address.get("postalCode"),
-                address.get("country")
+                id, token, body.getVersion(),
+                address.getStreetName(),
+                address.getStreetNumber(),
+                address.getCity(),
+                address.getState(),
+                address.getPostalCode(),
+                address.getCountry()
         );
     }
 
@@ -86,19 +96,20 @@ public class MeController {
     public CartResponse setBillingAddress(
             @PathVariable String id,
             @RequestHeader("Authorization") String token,
-            @RequestBody Map<String, Object> body
+            @RequestBody AddressRequest body
     ) {
-        Long version = Long.valueOf(body.get("version").toString());
-        Map<String, String> address = (Map<String, String>) body.get("address");
+        log.debug("POST /me/cart/{}/billing-address", id);
+
+        Address address = body.getAddress();
 
         return meService.setBillingAddress(
-                id, token, version,
-                address.get("streetName"),
-                address.get("streetNumber"),
-                address.get("city"),
-                address.get("state"),
-                address.get("postalCode"),
-                address.get("country")
+                id, token, body.getVersion(),
+                address.getStreetName(),
+                address.getStreetNumber(),
+                address.getCity(),
+                address.getState(),
+                address.getPostalCode(),
+                address.getCountry()
         );
     }
 
@@ -106,12 +117,13 @@ public class MeController {
     public CartResponse setShippingMethod(
             @PathVariable String id,
             @RequestHeader("Authorization") String token,
-            @RequestBody Map<String, Object> body
+            @RequestBody SetShippingMethodRequest body
     ) {
-        Long version = Long.valueOf(body.get("version").toString());
-        String shippingMethodId = (String) body.get("shippingMethodId");
+        log.debug("POST /me/cart/{}/shipping-method {}", id, body.getShippingMethodId());
 
-        return meService.setShippingMethod(id, token, version, shippingMethodId);
+        return meService.setShippingMethod(
+                id, token, body.getVersion(), body.getShippingMethodId()
+        );
     }
 
     @PostMapping("/cart/{id}/update")
@@ -120,6 +132,7 @@ public class MeController {
             @RequestHeader("Authorization") String token,
             @RequestBody CartUpdateRequest body
     ) {
+        log.debug("POST /me/cart/{}/update", id);
         return meService.updateMyCart(id, token, body);
     }
 
@@ -129,24 +142,26 @@ public class MeController {
             @RequestParam Long version,
             @RequestHeader("Authorization") String token
     ) {
+        log.debug("DELETE /me/cart/{} version={}", id, version);
         return meService.deleteMyCart(id, version, token);
     }
+
+    // ============= ORDER OPERATIONS =============
 
     @PostMapping("/order")
     public OrderResponse createMyOrder(
             @RequestHeader("Authorization") String token,
-            @RequestBody Map<String, Object> body
+            @RequestBody CreateOrderRequest body
     ) {
-        String cartId = (String) body.get("cartId");
-        Long cartVersion = Long.valueOf(body.get("cartVersion").toString());
-
-        return meService.createMyOrder(token, cartId, cartVersion);
+        log.debug("POST /me/order cartId={}", body.getCartId());
+        return meService.createMyOrder(token, body.getCartId(), body.getCartVersion());
     }
 
     @GetMapping("/order")
     public OrderListResponse getMyOrders(
             @RequestHeader("Authorization") String token
     ) {
+        log.debug("GET /me/order");
         return meService.getMyOrders(token);
     }
 
@@ -155,6 +170,7 @@ public class MeController {
             @PathVariable String id,
             @RequestHeader("Authorization") String token
     ) {
+        log.debug("GET /me/order/{}", id);
         return meService.getMyOrderById(id, token);
     }
 }

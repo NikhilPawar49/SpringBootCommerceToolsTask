@@ -1,6 +1,6 @@
 package com.example.commercetoolsDemo.controller;
 
-import com.example.commercetoolsDemo.dto.response.CustomerResponse;
+import com.example.api.model.CustomerResponse;
 import com.example.commercetoolsDemo.service.AuthService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +15,6 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @WebMvcTest(AuthController.class)
 @AutoConfigureMockMvc(addFilters = false)
 class AuthControllerTest {
@@ -29,10 +28,9 @@ class AuthControllerTest {
     @Test
     void registerCustomer_shouldReturn200() throws Exception {
 
-        CustomerResponse response = CustomerResponse.builder()
-                .id("cust-1")
-                .email("test@example.com")
-                .build();
+        CustomerResponse response = new CustomerResponse();
+        response.setId("cust-1");
+        response.setEmail("test@example.com");
 
         when(authService.createCustomer(any()))
                 .thenReturn(response);

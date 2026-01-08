@@ -1,17 +1,13 @@
 package com.example.commercetoolsDemo.service;
 
-import com.example.commercetoolsDemo.dto.request.CreateCartRequest;
-import com.example.commercetoolsDemo.dto.response.CartResponse;
+import com.example.api.model.CartResponse;
+import com.example.api.model.CreateCartRequest;
 import com.example.commercetoolsDemo.feign.AdminFeignClient;
-import com.example.commercetoolsDemo.mapper.ResponseMapper;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-
-import java.util.Map;
-
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.when;
@@ -22,59 +18,42 @@ class AdminServiceTest {
     @Mock
     private AdminFeignClient adminFeignClient;
 
-    @Mock
-    private ResponseMapper responseMapper;
-
     @InjectMocks
     private AdminService adminService;
 
     @Test
     void getCart_shouldReturnCartResponse() {
 
-        Map<String, Object> ctResponse = Map.of(
-                "id", "cart-1",
-                "version", 1
-        );
-
-        CartResponse mapped = CartResponse.builder()
-                .id("cart-1")
-                .version(1L)
-                .build();
+        // Arrange
+        CartResponse feignResponse = new CartResponse();
+        feignResponse.setId("cart-1");
 
         when(adminFeignClient.getCart(any(), any()))
-                .thenReturn(ctResponse);
+                .thenReturn(feignResponse);
 
-        when(responseMapper.mapToCartResponse(ctResponse))
-                .thenReturn(mapped);
-
+        // Act
         CartResponse response = adminService.getCart("cart-1");
 
+        // Assert
         assertEquals("cart-1", response.getId());
     }
 
     @Test
     void createCart_shouldReturnCartResponse() {
 
-        CreateCartRequest request = new CreateCartRequest("USD");
+        // Arrange
+        CreateCartRequest request = new CreateCartRequest();
 
-        Map<String, Object> ctResponse = Map.of(
-                "id", "cart-2",
-                "version", 1
-        );
-
-        CartResponse mapped = CartResponse.builder()
-                .id("cart-2")
-                .version(1L)
-                .build();
+        CartResponse feignResponse = new CartResponse();
+        feignResponse.setId("cart-2");
 
         when(adminFeignClient.createCart(any(), any()))
-                .thenReturn(ctResponse);
+                .thenReturn(feignResponse);
 
-        when(responseMapper.mapToCartResponse(ctResponse))
-                .thenReturn(mapped);
-
+        // Act
         CartResponse response = adminService.createCart(request);
 
+        // Assert
         assertEquals("cart-2", response.getId());
     }
 }

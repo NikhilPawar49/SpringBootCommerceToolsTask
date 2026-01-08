@@ -1,93 +1,72 @@
 package com.example.commercetoolsDemo.feign;
 
-import com.example.commercetoolsDemo.dto.request.CartUpdateRequest;
-import com.example.commercetoolsDemo.dto.request.CreateCartRequest;
-import com.example.commercetoolsDemo.dto.request.CreateOrderRequest;
+import com.example.api.model.*;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-
 @FeignClient(
         name = "meClient",
         url = "${ct.apiUrl}"
 )
 public interface MeFeignClient {
 
-    // Get active cart
     @GetMapping("/{projectKey}/me/active-cart")
-    Object getMyActiveCart(
+    CartResponse getMyActiveCart(
             @PathVariable String projectKey,
             @RequestHeader("Authorization") String token
     );
 
-    // Get all carts
     @GetMapping("/{projectKey}/me/carts")
-    Object getMyCarts(
+    CartListResponse getMyCarts(
             @PathVariable String projectKey,
             @RequestHeader("Authorization") String token
     );
 
-    // Get cart by ID
     @GetMapping("/{projectKey}/me/carts/{id}")
-    Object getMyCartById(
+    CartResponse getMyCartById(
             @PathVariable String projectKey,
             @PathVariable String id,
             @RequestHeader("Authorization") String token
     );
 
-    // Create cart
-    @PostMapping(
-            value = "/{projectKey}/me/carts",
-            consumes = MediaType.APPLICATION_JSON_VALUE
-    )
-    Object createMyCart(
+    @PostMapping("/{projectKey}/me/carts")
+    CartResponse createMyCart(
             @PathVariable String projectKey,
             @RequestHeader("Authorization") String token,
-            @RequestBody CreateCartRequest body
+            @RequestBody CreateCartRequest request
     );
 
-    // Update cart (add items, set address, etc.)
-    @PostMapping(
-            value = "/{projectKey}/me/carts/{id}",
-            consumes = MediaType.APPLICATION_JSON_VALUE
-    )
-    Object updateMyCart(
+    @PostMapping("/{projectKey}/me/carts/{id}")
+    CartResponse updateMyCart(
             @PathVariable String projectKey,
             @PathVariable String id,
             @RequestHeader("Authorization") String token,
-            @RequestBody CartUpdateRequest body
+            @RequestBody CartUpdateRequest request
     );
 
-    // Delete cart
     @DeleteMapping("/{projectKey}/me/carts/{id}")
-    Object deleteMyCart(
+    CartResponse deleteMyCart(
             @PathVariable String projectKey,
             @PathVariable String id,
-            @RequestParam("version") Long version,
+            @RequestParam Long version,
             @RequestHeader("Authorization") String token
     );
 
-    // Create order from cart
-    @PostMapping(
-            value = "/{projectKey}/me/orders",
-            consumes = MediaType.APPLICATION_JSON_VALUE
-    )
-    Object createMyOrder(
+    @PostMapping("/{projectKey}/me/orders")
+    OrderResponse createMyOrder(
             @PathVariable String projectKey,
             @RequestHeader("Authorization") String token,
-            @RequestBody CreateOrderRequest body
+            @RequestBody CreateOrderRequest request
     );
 
-    // Get my orders
     @GetMapping("/{projectKey}/me/orders")
-    Object getMyOrders(
+    OrderListResponse getMyOrders(
             @PathVariable String projectKey,
             @RequestHeader("Authorization") String token
     );
 
-    // Get order by ID
     @GetMapping("/{projectKey}/me/orders/{id}")
-    Object getMyOrderById(
+    OrderResponse getMyOrderById(
             @PathVariable String projectKey,
             @PathVariable String id,
             @RequestHeader("Authorization") String token

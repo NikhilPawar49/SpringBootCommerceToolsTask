@@ -1,6 +1,6 @@
 package com.example.commercetoolsDemo.controller;
 
-import com.example.commercetoolsDemo.dto.response.CartResponse;
+import com.example.api.model.CartResponse;
 import com.example.commercetoolsDemo.service.AdminService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,10 +30,8 @@ class AdminControllerTest {
     @Test
     void getCart_shouldReturnCart() throws Exception {
 
-        CartResponse response = CartResponse.builder()
-                .id("cart-1")
-                .version(1L)
-                .build();
+        CartResponse response = new CartResponse();
+        response.setId("cart-1");
 
         when(adminService.getCart(any()))
                 .thenReturn(response);
@@ -46,10 +44,8 @@ class AdminControllerTest {
     @Test
     void createCart_shouldReturnCart() throws Exception {
 
-        CartResponse response = CartResponse.builder()
-                .id("cart-2")
-                .version(1L)
-                .build();
+        CartResponse response = new CartResponse();
+        response.setId("cart-2");
 
         when(adminService.createCart(any()))
                 .thenReturn(response);

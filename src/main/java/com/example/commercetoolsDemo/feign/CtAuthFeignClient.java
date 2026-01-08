@@ -1,29 +1,23 @@
 package com.example.commercetoolsDemo.feign;
 
-import com.example.commercetoolsDemo.config.CtAuthFeignConfig;
-import com.example.commercetoolsDemo.config.FeignConfig;
+import com.example.commercetoolsDemo.dto.CtTokenResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.MediaType;
-import org.springframework.util.MultiValueMap;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestParam;
 
-import java.util.Map;
 @FeignClient(
         name = "ctAuthClient",
-        url = "${ct.authUrl}",
-        configuration = CtAuthFeignConfig.class
+        url = "${ct.authUrl}"
 )
 public interface CtAuthFeignClient {
 
     @PostMapping(
             value = "/oauth/token",
-            consumes = MediaType.APPLICATION_FORM_URLENCODED_VALUE
+            consumes = "application/x-www-form-urlencoded"
     )
-    Map<String, Object> getToken(
-            @RequestHeader("Authorization") String basicAuth,
+    CtTokenResponse getToken(
+            @RequestHeader("Authorization") String authorization,
             @RequestParam("grant_type") String grantType,
             @RequestParam("scope") String scope
     );

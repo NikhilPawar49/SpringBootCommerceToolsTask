@@ -1,40 +1,32 @@
 package com.example.commercetoolsDemo.feign;
 
-import com.example.commercetoolsDemo.config.AdminFeignConfig;
-import com.example.commercetoolsDemo.dto.request.CreateCustomerRequest;
+import com.example.api.model.CreateCustomerRequest;
+import com.example.api.model.CustomerResponse;
+import com.example.api.model.LoginResponse;
+import com.example.commercetoolsDemo.dto.LoginRequest;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @FeignClient(
         name = "authClient",
-        url = "${ct.apiUrl}",
-        configuration = AdminFeignConfig.class
+        url = "${ct.apiUrl}"
 )
 public interface AuthFeignClient {
 
-    @PostMapping(
-            value = "/{projectKey}/customers",
-            consumes = MediaType.APPLICATION_JSON_VALUE
-    )
-    Object createCustomer(
+    @PostMapping("/{projectKey}/customers")
+    CustomerResponse createCustomer(
             @PathVariable String projectKey,
-            @RequestBody CreateCustomerRequest body
+            @RequestBody CreateCustomerRequest request
     );
 
-    @PostMapping(
-            value = "/{projectKey}/login",
-            consumes = MediaType.APPLICATION_JSON_VALUE
-    )
-    Object customerLogin(
+    @PostMapping("/{projectKey}/login")
+    LoginResponse customerLogin(
             @PathVariable String projectKey,
-            @RequestBody Map<String, String> credentials
+            @RequestBody LoginRequest request
     );
 
     @GetMapping("/{projectKey}/me")
-    Object getCustomerInfo(
+    CustomerResponse getCustomerInfo(
             @PathVariable String projectKey,
             @RequestHeader("Authorization") String token
     );

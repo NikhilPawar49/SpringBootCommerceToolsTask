@@ -1,7 +1,9 @@
 package com.example.commercetoolsDemo.feign;
 
+import com.example.api.model.CartResponse;
+import com.example.api.model.CreateCartRequest;
 import com.example.commercetoolsDemo.config.AdminFeignConfig;
-import com.example.commercetoolsDemo.dto.request.CreateCartRequest;
+
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
@@ -14,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public interface AdminFeignClient {
 
     @GetMapping("/{projectKey}/carts/{id}")
-    Object getCart(
+    CartResponse getCart(
             @PathVariable String projectKey,
             @PathVariable String id
     );
@@ -23,13 +25,13 @@ public interface AdminFeignClient {
             value = "/{projectKey}/carts",
             consumes = MediaType.APPLICATION_JSON_VALUE
     )
-    Object createCart(
+    CartResponse createCart(
             @PathVariable String projectKey,
             @RequestBody CreateCartRequest body
     );
 
     @DeleteMapping("/{projectKey}/carts/{id}")
-    Object deleteCart(
+    CartResponse deleteCart(
             @PathVariable String projectKey,
             @PathVariable String id,
             @RequestParam("version") Long version
