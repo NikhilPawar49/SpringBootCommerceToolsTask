@@ -32,14 +32,12 @@ public class MeService {
     // ================= CART =================
 
     public CartResponse getMyActiveCart(String token) {
-        log.info("MeService#getMyActiveCart started");
         CartResponse response = meFeignClient.getMyActiveCart(projectKey, token);
         log.info("MeService#getMyActiveCart completed | cartId={}", response.getId());
         return response;
     }
 
     public CartListResponse getMyCarts(String token) {
-        log.info("MeService#getMyCarts started");
         CartListResponse response = meFeignClient.getMyCarts(projectKey, token);
         log.info("MeService#getMyCarts completed | total={}", response.getTotal());
         return response;
@@ -100,7 +98,6 @@ public class MeService {
             String postalCode,
             String country
     ) {
-        log.info("MeService#setShippingAddress started | cartId={}", cartId);
 
         Address address = new Address();
         address.setStreetName(streetName);
@@ -222,7 +219,6 @@ public class MeService {
 
 
     public OrderListResponse getMyOrders(String token) {
-        log.info("MeService#getMyOrders started");
         OrderListResponse response =
                 meFeignClient.getMyOrders(projectKey, token);
         log.info("MeService#getMyOrders completed | total={}", response.getTotal());

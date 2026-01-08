@@ -51,7 +51,6 @@ public class AuthService {
     // ================= GET CUSTOMER INFO =================
 
     public CustomerResponse getCustomerInfo(String token) {
-        log.debug("START getCustomerInfo");
 
         CustomerResponse response =
                 authFeignClient.getCustomerInfo(projectKey, token);

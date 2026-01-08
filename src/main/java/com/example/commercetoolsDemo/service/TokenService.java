@@ -41,8 +41,6 @@ public class TokenService {
      * Returns cached admin token or fetches a new one.
      */
     public synchronized String getAdminToken() {
-        log.debug("TokenService#getAdminToken called");
-
         if (accessToken == null || isTokenExpired()) {
             log.info("Admin token missing or expired, fetching new token");
             fetchNewToken();
@@ -56,7 +54,6 @@ public class TokenService {
      * Fetch new token using client_credentials flow.
      */
     private void fetchNewToken() {
-        log.info("TokenService#fetchNewToken started");
 
         try {
             String basicAuth = "Basic " + Base64.getEncoder()

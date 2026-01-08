@@ -31,13 +31,11 @@ public class AdminService {
     }
 
     public CartResponse createCart(CreateCartRequest body) {
-        log.info("AdminService#createCart started");
         log.debug("AdminService#createCart request={}", body);
 
         CartResponse response = adminFeignClient.createCart(projectKey, body);
 
         log.info("AdminService#createCart completed | cartId={}", response.getId());
-        log.debug("AdminService#createCart response={}", response);
 
         return response;
     }

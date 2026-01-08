@@ -21,7 +21,9 @@ repositories {
 dependencies {
 
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocOpenApiVersion}"
+
     implementation "org.openapitools:jackson-databind-nullable:${jacksonNullableVersion}"
+    implementation 'org.springframework.boot:spring-boot-starter-aop'
 
     implementation 'org.springframework.cloud:spring-cloud-starter-openfeign'
     implementation "io.github.openfeign.form:feign-form-spring:${feignFormVersion}"
