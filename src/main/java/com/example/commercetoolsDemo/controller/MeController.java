@@ -1,17 +1,13 @@
 package com.example.commercetoolsDemo.controller;
 
-import com.commercetools.api.models.cart.CartDraft;
-import com.commercetools.api.models.cart.CartUpdate;
-import com.commercetools.api.models.order.OrderFromCartDraft;
-import com.example.api.model.*;
+import com.example.commercetoolsDemo.dto.request.CartUpdateRequest;
+import com.example.commercetoolsDemo.dto.request.CreateCartRequest;
 import com.example.commercetoolsDemo.service.MeService;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Map;
 
-@Slf4j
 @RestController
 @RequestMapping("/me")
 @RequiredArgsConstructor
@@ -19,17 +15,24 @@ public class MeController {
 
     private final MeService meService;
 
-    // ========= CART =========
+    // ============= CART OPERATIONS =============
 
     @GetMapping("/cart/active")
-    public CartResponse getMyActiveCart(
+    public Object getMyActiveCart(
             @RequestHeader("Authorization") String token
     ) {
         return meService.getMyActiveCart(token);
     }
 
+    @GetMapping("/cart")
+    public Object getMyCarts(
+            @RequestHeader("Authorization") String token
+    ) {
+        return meService.getMyCarts(token);
+    }
+
     @GetMapping("/cart/{id}")
-    public CartResponse getMyCartById(
+    public Object getMyCartById(
             @PathVariable String id,
             @RequestHeader("Authorization") String token
     ) {
@@ -37,24 +40,90 @@ public class MeController {
     }
 
     @PostMapping("/cart")
-    public CartResponse createMyCart(
-            @RequestHeader("Authorization") String token,
-            @RequestBody CartDraft draft
+    public Object createMyCart(
+            @RequestHeader("Authorization") String auth,
+            @RequestBody CreateCartRequest body
     ) {
-        return meService.createMyCart(token, draft);
+        return meService.createMyCart(auth, body);
     }
 
-    @PostMapping("/cart/{id}")
-    public CartResponse updateMyCart(
+    @PostMapping("/cart/{id}/add-item")
+    public Object addLineItemToCart(
             @PathVariable String id,
             @RequestHeader("Authorization") String token,
-            @RequestBody CartUpdate update
+            @RequestBody Map<String, Object> body
     ) {
-        return meService.updateMyCart(id, token, update);
+        Long version = Long.valueOf(body.get("version").toString());
+        String productId = (String) body.get("productId");
+        Integer variantId = (Integer) body.getOrDefault("variantId", 1);
+        Integer quantity = (Integer) body.getOrDefault("quantity", 1);
+
+        return meService.addLineItemToCart(id, token, version, productId, variantId, quantity);
+    }
+
+    @PostMapping("/cart/{id}/shipping-address")
+    public Object setShippingAddress(
+            @PathVariable String id,
+            @RequestHeader("Authorization") String token,
+            @RequestBody Map<String, Object> body
+    ) {
+        Long version = Long.valueOf(body.get("version").toString());
+        Map<String, String> address = (Map<String, String>) body.get("address");
+
+        return meService.setShippingAddress(
+                id, token, version,
+                address.get("streetName"),
+                address.get("streetNumber"),
+                address.get("city"),
+                address.get("state"),
+                address.get("postalCode"),
+                address.get("country")
+        );
+    }
+
+    @PostMapping("/cart/{id}/billing-address")
+    public Object setBillingAddress(
+            @PathVariable String id,
+            @RequestHeader("Authorization") String token,
+            @RequestBody Map<String, Object> body
+    ) {
+        Long version = Long.valueOf(body.get("version").toString());
+        Map<String, String> address = (Map<String, String>) body.get("address");
+
+        return meService.setBillingAddress(
+                id, token, version,
+                address.get("streetName"),
+                address.get("streetNumber"),
+                address.get("city"),
+                address.get("state"),
+                address.get("postalCode"),
+                address.get("country")
+        );
+    }
+
+    @PostMapping("/cart/{id}/shipping-method")
+    public Object setShippingMethod(
+            @PathVariable String id,
+            @RequestHeader("Authorization") String token,
+            @RequestBody Map<String, Object> body
+    ) {
+        Long version = Long.valueOf(body.get("version").toString());
+        String shippingMethodId = (String) body.get("shippingMethodId");
+
+        return meService.setShippingMethod(id, token, version, shippingMethodId);
+    }
+
+    @PostMapping("/cart/{id}/update")
+    public Object updateMyCart(
+            @PathVariable String id,
+            @RequestHeader("Authorization") String token,
+            @RequestBody CartUpdateRequest body
+    ) {
+        return meService.updateMyCart(id, token, body);
     }
 
     @DeleteMapping("/cart/{id}")
-    public CartResponse deleteMyCart(
+    public Object deleteMyCart(
             @PathVariable String id,
             @RequestParam Long version,
             @RequestHeader("Authorization") String token
@@ -62,104 +131,28 @@ public class MeController {
         return meService.deleteMyCart(id, version, token);
     }
 
-    @GetMapping("/cart")
-    public CartListResponse getMyCarts(
-            @RequestHeader("Authorization") String token
-    ) {
-        return meService.getMyCarts(token);
-    }
-
-    @PostMapping("/cart/{id}/add-item")
-    public CartResponse addLineItemToCart(
-            @PathVariable String id,
-            @RequestHeader("Authorization") String token,
-            @RequestBody AddLineItemRequest body
-    ) {
-        return meService.addLineItemToCart(
-                id,
-                token,
-                body.getVersion(),
-                body.getProductId(),
-                body.getVariantId(),
-                body.getQuantity()
-        );
-    }
-
-    @PostMapping("/cart/{id}/shipping-address")
-    public CartResponse setShippingAddress(
-            @PathVariable String id,
-            @RequestHeader("Authorization") String token,
-            @RequestBody AddressRequest body
-    ) {
-        Address a = body.getAddress();
-
-        return meService.setShippingAddress(
-                id,
-                token,
-                body.getVersion(),
-                a.getStreetName(),
-                a.getStreetNumber(),
-                a.getCity(),
-                a.getState(),
-                a.getPostalCode(),
-                a.getCountry()
-        );
-    }
-
-    @PostMapping("/cart/{id}/billing-address")
-    public CartResponse setBillingAddress(
-            @PathVariable String id,
-            @RequestHeader("Authorization") String token,
-            @RequestBody AddressRequest body
-    ) {
-        Address a = body.getAddress();
-
-        return meService.setBillingAddress(
-                id,
-                token,
-                body.getVersion(),
-                a.getStreetName(),
-                a.getStreetNumber(),
-                a.getCity(),
-                a.getState(),
-                a.getPostalCode(),
-                a.getCountry()
-        );
-    }
-
-    @PostMapping("/cart/{id}/shipping-method")
-    public CartResponse setShippingMethod(
-            @PathVariable String id,
-            @RequestHeader("Authorization") String token,
-            @RequestBody SetShippingMethodRequest body
-    ) {
-        return meService.setShippingMethod(
-                id,
-                token,
-                body.getVersion(),
-                body.getShippingMethodId()
-        );
-    }
-
-    // ========= ORDER =========
+    // ============= ORDER OPERATIONS =============
 
     @PostMapping("/order")
-    public OrderResponse createMyOrder(
+    public Object createMyOrder(
             @RequestHeader("Authorization") String token,
-            @RequestBody OrderFromCartDraft draft
+            @RequestBody Map<String, Object> body
     ) {
-        return meService.createMyOrder(token, draft);
+        String cartId = (String) body.get("cartId");
+        Long cartVersion = Long.valueOf(body.get("cartVersion").toString());
+
+        return meService.createMyOrder(token, cartId, cartVersion);
     }
 
     @GetMapping("/order")
-    public OrderListResponse getMyOrders(
+    public Object getMyOrders(
             @RequestHeader("Authorization") String token
     ) {
         return meService.getMyOrders(token);
     }
 
     @GetMapping("/order/{id}")
-    public OrderResponse getMyOrderById(
+    public Object getMyOrderById(
             @PathVariable String id,
             @RequestHeader("Authorization") String token
     ) {
