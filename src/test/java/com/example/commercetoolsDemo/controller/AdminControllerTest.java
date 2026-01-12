@@ -1,6 +1,6 @@
 package com.example.commercetoolsDemo.controller;
 
-import com.example.api.model.CartResponse;
+import com.commercetools.api.models.cart.Cart;
 import com.example.commercetoolsDemo.service.AdminService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -30,11 +30,11 @@ class AdminControllerTest {
     @Test
     void getCart_shouldReturnCart() throws Exception {
 
-        CartResponse response = new CartResponse();
-        response.setId("cart-1");
+        Cart cart = org.mockito.Mockito.mock(Cart.class);
+        when(cart.getId()).thenReturn("cart-1");
 
         when(adminService.getCart(any()))
-                .thenReturn(response);
+                .thenReturn(cart);
 
         mockMvc.perform(get("/admin/cart/cart-1"))
                 .andExpect(status().isOk())
@@ -44,11 +44,11 @@ class AdminControllerTest {
     @Test
     void createCart_shouldReturnCart() throws Exception {
 
-        CartResponse response = new CartResponse();
-        response.setId("cart-2");
+        Cart cart = org.mockito.Mockito.mock(Cart.class);
+        when(cart.getId()).thenReturn("cart-2");
 
         when(adminService.createCart(any()))
-                .thenReturn(response);
+                .thenReturn(cart);
 
         mockMvc.perform(post("/admin/cart")
                         .contentType(MediaType.APPLICATION_JSON)

@@ -1,9 +1,10 @@
 package com.example.commercetoolsDemo.service;
 
-import com.example.api.model.*;
-//import com.example.commercetoolsDemo.dto.request.CreateCartRequest;
-//import com.example.commercetoolsDemo.dto.response.CartResponse;
+import com.commercetools.api.models.cart.Cart;
+import com.commercetools.api.models.cart.CartDraft;
+import com.example.api.model.CartResponse;
 import com.example.commercetoolsDemo.feign.AdminFeignClient;
+import com.example.commercetoolsDemo.mapper.CartMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -15,6 +16,7 @@ import org.springframework.stereotype.Service;
 public class AdminService {
 
     private final AdminFeignClient adminFeignClient;
+    private final CartMapper cartMapper;
 
     @Value("${ct.projectKey}")
     private String projectKey;
@@ -22,32 +24,35 @@ public class AdminService {
     public CartResponse getCart(String id) {
         log.info("AdminService#getCart started | cartId={}", id);
 
-        CartResponse response = adminFeignClient.getCart(projectKey, id);
+        Cart cart = adminFeignClient.getCart(projectKey, id);
 
-        log.info("AdminService#getCart completed | cartId={}", id);
-        log.debug("AdminService#getCart response={}", response);
-
-        return response;
+        log.info("AdminService#getCart completed | cartId={}, version={}",
+                cart.getId(),
+                cart.getVersion()
+        );
+        return cartMapper.toCartResponse(cart);
     }
 
-    public CartResponse createCart(CreateCartRequest body) {
-        log.debug("AdminService#createCart request={}", body);
+    public CartResponse createCart(CartDraft draft) {
+        log.debug("AdminService#createCart started | currency={}",
+                draft.getCurrency()
+        );
 
-        CartResponse response = adminFeignClient.createCart(projectKey, body);
+        Cart cart = adminFeignClient.createCart(projectKey, draft);
 
-        log.info("AdminService#createCart completed | cartId={}", response.getId());
-
-        return response;
+        log.info("AdminService#createCart completed | cartId={}, version={}",
+                cart.getId(),
+                cart.getVersion()
+        );
+        return cartMapper.toCartResponse(cart);
     }
 
     public CartResponse deleteCart(String id, Long version) {
         log.info("AdminService#deleteCart started | cartId={}, version={}", id, version);
 
-        CartResponse response = adminFeignClient.deleteCart(projectKey, id, version);
+        Cart cart = adminFeignClient.deleteCart(projectKey, id, version);
 
         log.info("AdminService#deleteCart completed | cartId={}", id);
-        log.debug("AdminService#deleteCart response={}", response);
-
-        return response;
+        return cartMapper.toCartResponse(cart);
     }
 }

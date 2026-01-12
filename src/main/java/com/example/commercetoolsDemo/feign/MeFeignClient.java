@@ -1,8 +1,13 @@
 package com.example.commercetoolsDemo.feign;
 
-import com.example.api.model.*;
+import com.commercetools.api.models.cart.Cart;
+import com.commercetools.api.models.cart.CartDraft;
+import com.commercetools.api.models.cart.CartPagedQueryResponse;
+import com.commercetools.api.models.cart.CartUpdate;
+import com.commercetools.api.models.order.Order;
+import com.commercetools.api.models.order.OrderFromCartDraft;
+import com.commercetools.api.models.order.OrderPagedQueryResponse;
 import org.springframework.cloud.openfeign.FeignClient;
-import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.*;
 @FeignClient(
         name = "meClient",
@@ -11,41 +16,41 @@ import org.springframework.web.bind.annotation.*;
 public interface MeFeignClient {
 
     @GetMapping("/{projectKey}/me/active-cart")
-    CartResponse getMyActiveCart(
+    Cart getMyActiveCart(
             @PathVariable String projectKey,
             @RequestHeader("Authorization") String token
     );
 
     @GetMapping("/{projectKey}/me/carts")
-    CartListResponse getMyCarts(
+    CartPagedQueryResponse getMyCarts(
             @PathVariable String projectKey,
             @RequestHeader("Authorization") String token
     );
 
     @GetMapping("/{projectKey}/me/carts/{id}")
-    CartResponse getMyCartById(
+    Cart getMyCartById(
             @PathVariable String projectKey,
             @PathVariable String id,
             @RequestHeader("Authorization") String token
     );
 
     @PostMapping("/{projectKey}/me/carts")
-    CartResponse createMyCart(
+    Cart createMyCart(
             @PathVariable String projectKey,
             @RequestHeader("Authorization") String token,
-            @RequestBody CreateCartRequest request
+            @RequestBody CartDraft request
     );
 
     @PostMapping("/{projectKey}/me/carts/{id}")
-    CartResponse updateMyCart(
+    Cart updateMyCart(
             @PathVariable String projectKey,
             @PathVariable String id,
             @RequestHeader("Authorization") String token,
-            @RequestBody CartUpdateRequest request
+            @RequestBody CartUpdate request
     );
 
     @DeleteMapping("/{projectKey}/me/carts/{id}")
-    CartResponse deleteMyCart(
+    Cart deleteMyCart(
             @PathVariable String projectKey,
             @PathVariable String id,
             @RequestParam Long version,
@@ -53,20 +58,21 @@ public interface MeFeignClient {
     );
 
     @PostMapping("/{projectKey}/me/orders")
-    OrderResponse createMyOrder(
+    Order createMyOrder(
             @PathVariable String projectKey,
             @RequestHeader("Authorization") String token,
-            @RequestBody CreateOrderRequest request
+            @RequestBody OrderFromCartDraft body
     );
 
+
     @GetMapping("/{projectKey}/me/orders")
-    OrderListResponse getMyOrders(
+    OrderPagedQueryResponse getMyOrders(
             @PathVariable String projectKey,
             @RequestHeader("Authorization") String token
     );
 
     @GetMapping("/{projectKey}/me/orders/{id}")
-    OrderResponse getMyOrderById(
+    Order getMyOrderById(
             @PathVariable String projectKey,
             @PathVariable String id,
             @RequestHeader("Authorization") String token

@@ -1,8 +1,10 @@
 package com.example.commercetoolsDemo.service;
 
-import com.example.api.model.*;
-import com.example.commercetoolsDemo.dto.LoginRequest;
+import com.commercetools.api.models.customer.*;
+import com.example.api.model.CustomerResponse;
+import com.example.api.model.LoginResponse;
 import com.example.commercetoolsDemo.feign.AuthFeignClient;
+import com.example.commercetoolsDemo.mapper.CustomerMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -14,20 +16,20 @@ import org.springframework.stereotype.Service;
 public class AuthService {
 
     private final AuthFeignClient authFeignClient;
+    private final CustomerMapper customerMapper;
 
     @Value("${ct.projectKey}")
     private String projectKey;
 
     // ================= CREATE CUSTOMER =================
 
-    public CustomerResponse createCustomer(CreateCustomerRequest request) {
+    public CustomerResponse createCustomer(CustomerDraft request) {
         log.debug("START createCustomer | email={}", request.getEmail());
 
-        CustomerResponse response =
-                authFeignClient.createCustomer(projectKey, request);
+        Customer customer = authFeignClient.createCustomer(projectKey, request);
 
-        log.debug("END createCustomer | customerId={}", response.getId());
-        return response;
+        log.debug("END createCustomer | customerId={}", customer.getId());
+        return customerMapper.toCustomerResponse(customer);
     }
 
     // ================= LOGIN =================
@@ -35,27 +37,29 @@ public class AuthService {
     public LoginResponse loginCustomer(String email, String password) {
         log.debug("START loginCustomer | email={}", email);
 
-        LoginRequest request = new LoginRequest();
-        request.setEmail(email);
-        request.setPassword(password);
+        CustomerSignin signin = CustomerSignin.builder()
+                .email(email)
+                .password(password)
+                .build();
 
-        LoginResponse response =
-                authFeignClient.customerLogin(projectKey, request);
+        CustomerSignInResult result = authFeignClient.customerLogin(projectKey, signin);
 
-        log.debug("END loginCustomer | customerId={}",
-                response.getCustomer() != null ? response.getCustomer().getId() : null);
+        log.debug(
+                "END loginCustomer | customerId={}",
+                result.getCustomer() != null ? result.getCustomer().getId() : null
+        );
 
-        return response;
+        return customerMapper.toLoginResponse(result);
     }
 
     // ================= GET CUSTOMER INFO =================
 
     public CustomerResponse getCustomerInfo(String token) {
+        log.debug("START getCustomerInfo");
 
-        CustomerResponse response =
-                authFeignClient.getCustomerInfo(projectKey, token);
+        Customer customer = authFeignClient.getCustomerInfo(projectKey, token);
 
-        log.debug("END getCustomerInfo | customerId={}", response.getId());
-        return response;
+        log.debug("END getCustomerInfo | customerId={}", customer.getId());
+        return customerMapper.toCustomerResponse(customer);
     }
 }

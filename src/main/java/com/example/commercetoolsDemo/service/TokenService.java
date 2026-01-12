@@ -1,19 +1,14 @@
 package com.example.commercetoolsDemo.service;
 
 import com.example.api.model.*;
-//import com.example.commercetoolsDemo.dto.response.CtTokenResponse;
 import com.example.commercetoolsDemo.dto.CtTokenResponse;
 import com.example.commercetoolsDemo.feign.CtAuthFeignClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-
 import java.nio.charset.StandardCharsets;
 import java.time.Instant;
 import java.util.Base64;
-import java.util.Map;
 
 @Slf4j
 @Service

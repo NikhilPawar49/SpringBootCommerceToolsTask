@@ -1,9 +1,9 @@
 package com.example.commercetoolsDemo.feign;
 
-import com.example.api.model.CreateCustomerRequest;
-import com.example.api.model.CustomerResponse;
-import com.example.api.model.LoginResponse;
-import com.example.commercetoolsDemo.dto.LoginRequest;
+import com.commercetools.api.models.customer.Customer;
+import com.commercetools.api.models.customer.CustomerDraft;
+import com.commercetools.api.models.customer.CustomerSignInResult;
+import com.commercetools.api.models.customer.CustomerSignin;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,19 +14,20 @@ import org.springframework.web.bind.annotation.*;
 public interface AuthFeignClient {
 
     @PostMapping("/{projectKey}/customers")
-    CustomerResponse createCustomer(
+    Customer createCustomer(
             @PathVariable String projectKey,
-            @RequestBody CreateCustomerRequest request
+            @RequestBody CustomerDraft request
     );
 
     @PostMapping("/{projectKey}/login")
-    LoginResponse customerLogin(
+    CustomerSignInResult customerLogin(
             @PathVariable String projectKey,
-            @RequestBody LoginRequest request
+            @RequestBody CustomerSignin request
     );
 
+
     @GetMapping("/{projectKey}/me")
-    CustomerResponse getCustomerInfo(
+    Customer getCustomerInfo(
             @PathVariable String projectKey,
             @RequestHeader("Authorization") String token
     );

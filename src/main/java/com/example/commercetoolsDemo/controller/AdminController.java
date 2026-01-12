@@ -1,6 +1,7 @@
 package com.example.commercetoolsDemo.controller;
 
-import com.example.api.model.*;
+import com.commercetools.api.models.cart.CartDraft;
+import com.example.api.model.CartResponse;
 import com.example.commercetoolsDemo.service.AdminService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +19,8 @@ public class AdminController {
     }
 
     @PostMapping("/cart")
-    public CartResponse createCart(@RequestBody CreateCartRequest body) {
-        return adminService.createCart(body);
+    public CartResponse createCart(@RequestBody CartDraft draft) {
+        return adminService.createCart(draft);
     }
 
     @DeleteMapping("/cart/{id}")

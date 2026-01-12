@@ -1,23 +1,25 @@
 package com.example.commercetoolsDemo.service;
 
-import com.example.api.model.*;
-//import com.example.commercetoolsDemo.dto.request.CartUpdateRequest;
-//import com.example.commercetoolsDemo.dto.request.CreateCartRequest;
-//import com.example.commercetoolsDemo.dto.request.CreateOrderRequest;
-//import com.example.commercetoolsDemo.dto.request.CartUpdateRequest.CartAction;
-//import com.example.commercetoolsDemo.dto.request.CartUpdateRequest.Address;
-//import com.example.commercetoolsDemo.dto.request.CartUpdateRequest.ShippingMethodReference;
-//import com.example.commercetoolsDemo.dto.response.CartListResponse;
-//import com.example.commercetoolsDemo.dto.response.CartResponse;
-//import com.example.commercetoolsDemo.dto.response.OrderListResponse;
-//import com.example.commercetoolsDemo.dto.response.OrderResponse;
+import com.commercetools.api.models.cart.*;
+import com.commercetools.api.models.common.Address;
+import com.commercetools.api.models.order.Order;
+import com.commercetools.api.models.order.OrderFromCartDraft;
+import com.commercetools.api.models.order.OrderPagedQueryResponse;
+import com.commercetools.api.models.shipping_method.ShippingMethodResourceIdentifier;
+import com.example.api.model.CartListResponse;
+import com.example.api.model.CartResponse;
+import com.example.api.model.OrderListResponse;
+import com.example.api.model.OrderResponse;
 import com.example.commercetoolsDemo.feign.MeFeignClient;
+import com.example.commercetoolsDemo.mapper.CartMapper;
+import com.example.commercetoolsDemo.mapper.OrderMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Slf4j
 @Service
@@ -25,6 +27,8 @@ import java.util.List;
 public class MeService {
 
     private final MeFeignClient meFeignClient;
+    private final CartMapper cartMapper;
+    private final OrderMapper orderMapper;
 
     @Value("${ct.projectKey}")
     private String projectKey;
@@ -32,30 +36,45 @@ public class MeService {
     // ================= CART =================
 
     public CartResponse getMyActiveCart(String token) {
-        CartResponse response = meFeignClient.getMyActiveCart(projectKey, token);
-        log.info("MeService#getMyActiveCart completed | cartId={}", response.getId());
-        return response;
+        Cart cart = meFeignClient.getMyActiveCart(projectKey, token);
+        log.info("MeService#getMyActiveCart completed | cartId={}", cart.getId());
+        return cartMapper.toCartResponse(cart);
     }
 
     public CartListResponse getMyCarts(String token) {
-        CartListResponse response = meFeignClient.getMyCarts(projectKey, token);
+        CartPagedQueryResponse response =
+                meFeignClient.getMyCarts(projectKey, token);
+
         log.info("MeService#getMyCarts completed | total={}", response.getTotal());
-        return response;
+
+        CartListResponse listResponse = new CartListResponse();
+        listResponse.setTotal(
+                response.getTotal() != null ? response.getTotal().intValue() : 0
+        );
+
+        listResponse.setResults(
+                response.getResults() == null
+                        ? List.of()
+                        : response.getResults().stream()
+                        .map(cartMapper::toCartResponse)
+                        .collect(Collectors.toList())
+        );
+
+        return listResponse;
     }
 
     public CartResponse getMyCartById(String id, String token) {
         log.info("MeService#getMyCartById started | cartId={}", id);
-        CartResponse response = meFeignClient.getMyCartById(projectKey, id, token);
+        Cart cart = meFeignClient.getMyCartById(projectKey, id, token);
         log.info("MeService#getMyCartById completed | cartId={}", id);
-        return response;
+        return cartMapper.toCartResponse(cart);
     }
 
-    public CartResponse createMyCart(String token, CreateCartRequest request) {
+    public CartResponse createMyCart(String token, CartDraft request) {
         log.info("MeService#createMyCart started");
-        log.debug("CreateCartRequest={}", request);
-        CartResponse response = meFeignClient.createMyCart(projectKey, token, request);
-        log.info("MeService#createMyCart completed | cartId={}", response.getId());
-        return response;
+        Cart cart = meFeignClient.createMyCart(projectKey, token, request);
+        log.info("MeService#createMyCart completed | cartId={}", cart.getId());
+        return cartMapper.toCartResponse(cart);
     }
 
     // ================= CART ACTIONS =================
@@ -68,23 +87,25 @@ public class MeService {
             Integer variantId,
             Integer quantity
     ) {
-        log.info("MeService#addLineItemToCart started | cartId={}", cartId);
+        log.info("MeService#addLineItemToCart started | cartId={}, version={}", cartId, version);
 
-        CartAction action = new CartAction();
-        action.setAction("addLineItem");
-        action.setProductId(productId);
-        action.setVariantId(variantId);
-        action.setQuantity(quantity);
+        CartAddLineItemAction action = CartAddLineItemAction.builder()
+                .productId(productId)
+                .variantId(variantId.longValue())
+                .quantity(quantity.longValue())
+                .build();
 
-        CartUpdateRequest request = new CartUpdateRequest();
-        request.setVersion(version);
-        request.setActions(List.of(action));
+        CartUpdate update = CartUpdate.builder()
+                .version(version)
+                .actions(action)
+                .build();
 
-        CartResponse response =
-                meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        Cart cart = meFeignClient.updateMyCart(projectKey, cartId, token, update);
 
-        log.info("MeService#addLineItemToCart completed | cartId={}", cartId);
-        return response;
+        log.info("MeService#addLineItemToCart completed | cartId={}, newVersion={}",
+                cart.getId(), cart.getVersion());
+
+        return cartMapper.toCartResponse(cart);
     }
 
     public CartResponse setShippingAddress(
@@ -98,28 +119,31 @@ public class MeService {
             String postalCode,
             String country
     ) {
+        log.info("MeService#setShippingAddress started | cartId={}", cartId);
 
-        Address address = new Address();
-        address.setStreetName(streetName);
-        address.setStreetNumber(streetNumber);
-        address.setCity(city);
-        address.setState(state);
-        address.setPostalCode(postalCode);
-        address.setCountry(country);
+        Address address = Address.builder()
+                .streetName(streetName)
+                .streetNumber(streetNumber)
+                .city(city)
+                .state(state)
+                .postalCode(postalCode)
+                .country(country)
+                .build();
 
-        CartAction action = new CartAction();
-        action.setAction("setShippingAddress");
-        action.setAddress(address);
+        CartSetShippingAddressAction action =
+                CartSetShippingAddressAction.builder()
+                        .address(address)
+                        .build();
 
-        CartUpdateRequest request = new CartUpdateRequest();
-        request.setVersion(version);
-        request.setActions(List.of(action));
+        CartUpdate update = CartUpdate.builder()
+                .version(version)
+                .actions(action)
+                .build();
 
-        CartResponse response =
-                meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        Cart cart = meFeignClient.updateMyCart(projectKey, cartId, token, update);
 
         log.info("MeService#setShippingAddress completed | cartId={}", cartId);
-        return response;
+        return cartMapper.toCartResponse(cart);
     }
 
     public CartResponse setBillingAddress(
@@ -135,27 +159,29 @@ public class MeService {
     ) {
         log.info("MeService#setBillingAddress started | cartId={}", cartId);
 
-        Address address = new Address();
-        address.setStreetName(streetName);
-        address.setStreetNumber(streetNumber);
-        address.setCity(city);
-        address.setState(state);
-        address.setPostalCode(postalCode);
-        address.setCountry(country);
+        Address address = Address.builder()
+                .streetName(streetName)
+                .streetNumber(streetNumber)
+                .city(city)
+                .state(state)
+                .postalCode(postalCode)
+                .country(country)
+                .build();
 
-        CartAction action = new CartAction();
-        action.setAction("setBillingAddress");
-        action.setAddress(address);
+        CartSetBillingAddressAction action =
+                CartSetBillingAddressAction.builder()
+                        .address(address)
+                        .build();
 
-        CartUpdateRequest request = new CartUpdateRequest();
-        request.setVersion(version);
-        request.setActions(List.of(action));
+        CartUpdate update = CartUpdate.builder()
+                .version(version)
+                .actions(action)
+                .build();
 
-        CartResponse response =
-                meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        Cart cart = meFeignClient.updateMyCart(projectKey, cartId, token, update);
 
         log.info("MeService#setBillingAddress completed | cartId={}", cartId);
-        return response;
+        return cartMapper.toCartResponse(cart);
     }
 
     public CartResponse setShippingMethod(
@@ -166,70 +192,91 @@ public class MeService {
     ) {
         log.info("MeService#setShippingMethod started | cartId={}", cartId);
 
-        ShippingMethodReference shippingMethod = new ShippingMethodReference();
-        shippingMethod.setTypeId("shipping-method");
-        shippingMethod.setId(shippingMethodId);
+        ShippingMethodResourceIdentifier shippingMethod =
+                ShippingMethodResourceIdentifier.builder()
+                        .id(shippingMethodId)
+                        .build();
 
-        CartAction action = new CartAction();
-        action.setAction("setShippingMethod");
-        action.setShippingMethod(shippingMethod);
+        CartSetShippingMethodAction action =
+                CartSetShippingMethodAction.builder()
+                        .shippingMethod(shippingMethod)
+                        .build();
 
-        CartUpdateRequest request = new CartUpdateRequest();
-        request.setVersion(version);
-        request.setActions(List.of(action));
+        CartUpdate update = CartUpdate.builder()
+                .version(version)
+                .actions(action)
+                .build();
 
-        CartResponse response =
-                meFeignClient.updateMyCart(projectKey, cartId, token, request);
+        Cart cart = meFeignClient.updateMyCart(projectKey, cartId, token, update);
 
         log.info("MeService#setShippingMethod completed | cartId={}", cartId);
-        return response;
+        return cartMapper.toCartResponse(cart);
     }
 
-    public CartResponse updateMyCart(String cartId, String token, CartUpdateRequest request) {
-        log.info("MeService#updateMyCart started | cartId={}", cartId);
-        CartResponse response =
-                meFeignClient.updateMyCart(projectKey, cartId, token, request);
-        log.info("MeService#updateMyCart completed | cartId={}", cartId);
-        return response;
+    public CartResponse updateMyCart(String cartId, String token, CartUpdate update) {
+        log.info("MeService#updateMyCart started | cartId={}, version={}",
+                cartId, update.getVersion());
+
+        Cart cart = meFeignClient.updateMyCart(projectKey, cartId, token, update);
+
+        log.info("MeService#updateMyCart completed | cartId={}, newVersion={}",
+                cart.getId(), cart.getVersion());
+
+        return cartMapper.toCartResponse(cart);
     }
 
-    public CartResponse deleteMyCart(String id, Long version, String token) {
-        log.info("MeService#deleteMyCart started | cartId={}, version={}", id, version);
-        CartResponse response =
-                meFeignClient.deleteMyCart(projectKey, id, version, token);
-        log.info("MeService#deleteMyCart completed | cartId={}", id);
-        return response;
+    public CartResponse deleteMyCart(String cartId, Long version, String token) {
+        log.info("MeService#deleteMyCart started | cartId={}, version={}", cartId, version);
+
+        Cart cart = meFeignClient.deleteMyCart(projectKey, cartId, version, token);
+
+        log.info("MeService#deleteMyCart completed | cartId={}", cartId);
+        return cartMapper.toCartResponse(cart);
     }
 
     // ================= ORDER =================
 
-    public OrderResponse createMyOrder(String token, String cartId, Long cartVersion) {
-        log.info("MeService#createMyOrder started | cartId={}, version={}", cartId, cartVersion);
+    public OrderResponse createMyOrder(String token, OrderFromCartDraft draft) {
+        log.info("Creating order | cartId={}, version={}",
+                draft.getCart().getId(),
+                draft.getVersion()
+        );
 
-        CreateOrderRequest request = new CreateOrderRequest();
-        request.setCartId(cartId);
-        request.setCartVersion(cartVersion);
-
-        OrderResponse response =
-                meFeignClient.createMyOrder(projectKey, token, request);
-
-        log.info("MeService#createMyOrder completed | orderId={}", response.getId());
-        return response;
+        Order order = meFeignClient.createMyOrder(projectKey, token, draft);
+        return orderMapper.toOrderResponse(order);
     }
 
-
     public OrderListResponse getMyOrders(String token) {
-        OrderListResponse response =
+        log.info("MeService#getMyOrders started");
+
+        OrderPagedQueryResponse response =
                 meFeignClient.getMyOrders(projectKey, token);
+
         log.info("MeService#getMyOrders completed | total={}", response.getTotal());
-        return response;
+
+        OrderListResponse listResponse = new OrderListResponse();
+        listResponse.setTotal(
+                response.getTotal() != null ? response.getTotal().intValue() : 0
+        );
+
+        listResponse.setResults(
+                response.getResults() == null
+                        ? List.of()
+                        : response.getResults().stream()
+                        .map(orderMapper::toOrderResponse)
+                        .collect(Collectors.toList())
+        );
+
+
+        return listResponse;
     }
 
     public OrderResponse getMyOrderById(String id, String token) {
         log.info("MeService#getMyOrderById started | orderId={}", id);
-        OrderResponse response =
-                meFeignClient.getMyOrderById(projectKey, id, token);
+
+        Order order = meFeignClient.getMyOrderById(projectKey, id, token);
+
         log.info("MeService#getMyOrderById completed | orderId={}", id);
-        return response;
+        return orderMapper.toOrderResponse(order);
     }
 }

@@ -22,7 +22,7 @@ public class LoggingAspect {
 
         long startTime = System.currentTimeMillis();
 
-        // 🔹 START log
+        //   START log
         log.info("START  {}.{} | args={}", className, methodName, Arrays.toString(args));
 
         try {
@@ -30,7 +30,7 @@ public class LoggingAspect {
 
             long timeTaken = System.currentTimeMillis() - startTime;
 
-            // 🔹 END log
+            //  END log
             log.info("END    {}.{} | result={} | time={}ms",
                     className, methodName, result, timeTaken);
 

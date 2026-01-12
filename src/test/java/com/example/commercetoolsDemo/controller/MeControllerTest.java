@@ -1,6 +1,6 @@
 package com.example.commercetoolsDemo.controller;
 
-import com.example.api.model.CartResponse;
+import com.commercetools.api.models.cart.Cart;
 import com.example.commercetoolsDemo.service.MeService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,11 +29,11 @@ class MeControllerTest {
     @Test
     void createMyCart_shouldReturnCart() throws Exception {
 
-        CartResponse response = new CartResponse();
-        response.setId("cart-1");
+        Cart cart = org.mockito.Mockito.mock(Cart.class);
+        when(cart.getId()).thenReturn("cart-1");
 
         when(meService.createMyCart(any(), any()))
-                .thenReturn(response);
+                .thenReturn(cart);
 
         mockMvc.perform(post("/me/cart")
                         .header("Authorization", "Bearer token")
