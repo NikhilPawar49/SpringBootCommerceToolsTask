@@ -1,22 +1,18 @@
 package com.example.commercetoolsDemo.service;
 
+import com.example.api.model.*;
+import com.example.commercetoolsDemo.dto.CtTokenResponse;
+import com.example.commercetoolsDemo.feign.CtAuthFeignClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.*;
 import org.springframework.stereotype.Service;
-import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.util.MultiValueMap;
-import org.springframework.web.client.RestTemplate;
-
+import java.nio.charset.StandardCharsets;
 import java.time.Instant;
-import java.util.Map;
+import java.util.Base64;
 
 @Slf4j
 @Service
 public class TokenService {
-
-    @Value("${ct.authUrl}")
-    private String authUrl;
 
     @Value("${ct.clientId}")
     private String clientId;
@@ -30,76 +26,65 @@ public class TokenService {
     private String accessToken;
     private Instant expiryTime;
 
-    private final RestTemplate restTemplate = new RestTemplate();
+    private final CtAuthFeignClient authFeignClient;
+
+    public TokenService(CtAuthFeignClient authFeignClient) {
+        this.authFeignClient = authFeignClient;
+    }
 
     /**
-     * Returns a valid admin token (cached or fresh).
+     * Returns cached admin token or fetches a new one.
      */
     public synchronized String getAdminToken() {
-
         if (accessToken == null || isTokenExpired()) {
             log.info("Admin token missing or expired, fetching new token");
             fetchNewToken();
         }
 
+        log.debug("TokenService#getAdminToken returning token");
         return accessToken;
     }
 
     /**
-     * Calls commercetools OAuth server using client_credentials flow.
+     * Fetch new token using client_credentials flow.
      */
     private void fetchNewToken() {
 
         try {
-            log.info("Calling commercetools OAuth server");
+            String basicAuth = "Basic " + Base64.getEncoder()
+                    .encodeToString((clientId + ":" + clientSecret)
+                            .getBytes(StandardCharsets.UTF_8));
 
-            HttpHeaders headers = new HttpHeaders();
-            headers.setBasicAuth(clientId, clientSecret);
-            headers.setContentType(MediaType.APPLICATION_FORM_URLENCODED);
+            CtTokenResponse response =
+                    authFeignClient.getToken(basicAuth, "client_credentials", scopes);
 
-            MultiValueMap<String, String> body = new LinkedMultiValueMap<>();
-            body.add("grant_type", "client_credentials");
-            body.add("scope", scopes);
+            if (response == null || response.getAccessToken() == null) {
+                throw new IllegalStateException("Invalid token response from commercetools");
+            }
 
-            HttpEntity<MultiValueMap<String, String>> request =
-                    new HttpEntity<>(body, headers);
+            this.accessToken = response.getAccessToken();
+            this.expiryTime = Instant.now()
+                    .plusSeconds(response.getExpiresIn() - 60);
 
-            ResponseEntity<Map> response = restTemplate.exchange(
-                    authUrl + "/oauth/token",
-                    HttpMethod.POST,
-                    request,
-                    Map.class
+            log.info(
+                    "Admin token fetched successfully | expiresIn={}s | scope={}",
+                    response.getExpiresIn(),
+                    response.getScope()
             );
 
-            if (response.getBody() == null) {
-                throw new IllegalStateException("Empty token response from commercetools");
-            }
-
-            Map<String, Object> responseBody = response.getBody();
-
-            accessToken = (String) responseBody.get("access_token");
-            Integer expiresIn = (Integer) responseBody.get("expires_in");
-
-            if (accessToken == null || expiresIn == null) {
-                throw new IllegalStateException("Invalid token response: " + responseBody);
-            }
-
-            // safety buffer of 60 seconds
-            expiryTime = Instant.now().plusSeconds(expiresIn - 60);
-
-            log.info("Admin token fetched successfully, expires in {} seconds", expiresIn);
-            log.info("Admin token prefix: {}", accessToken.substring(0, 15));
+            log.debug("Admin token prefix: {}", accessToken.substring(0, 15));
 
         } catch (Exception ex) {
             log.error("Failed to fetch commercetools admin token", ex);
             throw ex;
+        } finally {
+            log.debug("TokenService#fetchNewToken finished");
         }
     }
 
-    /**
-     * Checks if cached token is expired.
-     */
     private boolean isTokenExpired() {
-        return expiryTime == null || Instant.now().isAfter(expiryTime);
+        boolean expired = expiryTime == null || Instant.now().isAfter(expiryTime);
+        log.debug("TokenService#isTokenExpired = {}", expired);
+        return expired;
     }
 }
