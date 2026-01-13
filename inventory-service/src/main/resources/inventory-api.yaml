@@ -1,0 +1,170 @@
+openapi: 3.0.3
+info:
+  title: Inventory Service API
+  version: 1.0.0
+  description: API for managing product inventory
+
+paths:
+  /inventory/{skuId}:
+    get:
+      summary: Check inventory availability
+      operationId: checkInventory
+      tags:
+        - inventory
+      parameters:
+        - name: skuId
+          in: path
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Inventory status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryResponse'
+        '404':
+          description: SKU not found
+
+  /inventory/deduct:
+    post:
+      summary: Deduct inventory when order is placed
+      operationId: deductInventory
+      tags:
+        - inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DeductInventoryRequest'
+      responses:
+        '200':
+          description: Inventory deducted successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeductInventoryResponse'
+        '400':
+          description: Insufficient inventory
+        '404':
+          description: SKU not found
+
+  /inventory/bulk-check:
+    post:
+      summary: Check inventory for multiple SKUs
+      operationId: bulkCheckInventory
+      tags:
+        - inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BulkInventoryRequest'
+      responses:
+        '200':
+          description: Bulk inventory status
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/BulkInventoryResponse'
+
+  /inventory/add:
+    post:
+      summary: Add inventory (restock)
+      operationId: addInventory
+      tags:
+        - inventory
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddInventoryRequest'
+      responses:
+        '200':
+          description: Inventory added successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InventoryResponse'
+
+components:
+  schemas:
+    InventoryResponse:
+      type: object
+      properties:
+        skuId:
+          type: string
+        available:
+          type: boolean
+        quantity:
+          type: integer
+        productName:
+          type: string
+
+    DeductInventoryRequest:
+      type: object
+      required:
+        - skuId
+        - quantity
+      properties:
+        skuId:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+        orderId:
+          type: string
+
+    DeductInventoryResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+        message:
+          type: string
+        remainingQuantity:
+          type: integer
+        skuId:
+          type: string
+
+    AddInventoryRequest:
+      type: object
+      required:
+        - skuId
+        - quantity
+      properties:
+        skuId:
+          type: string
+        quantity:
+          type: integer
+          minimum: 1
+
+    BulkInventoryRequest:
+      type: object
+      properties:
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryItem'
+
+    InventoryItem:
+      type: object
+      properties:
+        skuId:
+          type: string
+        quantity:
+          type: integer
+
+    BulkInventoryResponse:
+      type: object
+      properties:
+        allAvailable:
+          type: boolean
+        items:
+          type: array
+          items:
+            $ref: '#/components/schemas/InventoryResponse'
