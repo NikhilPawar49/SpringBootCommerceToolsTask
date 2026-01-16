@@ -1,8 +1,6 @@
 package com.example.commercetoolsDemo.controller;
 
-import com.commercetools.api.models.customer.CustomerDraft;
-import com.example.api.model.CustomerResponse;
-import com.example.api.model.LoginResponse;
+import com.example.commercetoolsDemo.dto.request.CreateCustomerRequest;
 import com.example.commercetoolsDemo.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -17,22 +15,19 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/register")
-    public CustomerResponse registerCustomer(@RequestBody CustomerDraft body) {
+    public Object registerCustomer(@RequestBody CreateCustomerRequest body) {
         return authService.createCustomer(body);
     }
 
     @PostMapping("/login")
-    public LoginResponse loginCustomer(@RequestBody Map<String, String> credentials) {
-        return authService.loginCustomer(
-                credentials.get("email"),
-                credentials.get("password")
-        );
+    public Object loginCustomer(@RequestBody Map<String, String> credentials) {
+        String email = credentials.get("email");
+        String password = credentials.get("password");
+        return authService.loginCustomer(email, password);
     }
 
     @GetMapping("/me")
-    public CustomerResponse getCustomerInfo(
-            @RequestHeader("Authorization") String token
-    ) {
+    public Object getCustomerInfo(@RequestHeader("Authorization") String token) {
         return authService.getCustomerInfo(token);
     }
 }
